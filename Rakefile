@@ -6,7 +6,7 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "falluto"
     gem.summary = %Q{A model checker for verifying fault tolerant systems}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.description = %Q{A model checker for verifying fault tolerant systems}
     gem.email = "ehames@gmail.com"
     gem.homepage = "http://github.com/ehames/falluto"
     gem.authors = ["Edgardo Hames"]
