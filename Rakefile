@@ -11,6 +11,9 @@ begin
     gem.homepage = "http://github.com/ehames/falluto"
     gem.authors = ["Edgardo Hames"]
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
+
+    gem.add_dependency "treetop", ">= 1.2.3"
+
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
