@@ -10,6 +10,7 @@ begin
     gem.email = "ehames@gmail.com"
     gem.homepage = "http://github.com/ehames/falluto"
     gem.authors = ["Edgardo Hames"]
+    gem.files = ["{lib,bin}/**/*"].map{|p| Dir[p]}.flatten
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
 
     gem.add_dependency "treetop", ">= 1.2.3"

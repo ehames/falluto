@@ -1,3 +1,7 @@
+#!/usr/bin/ruby
+
+gem 'treetop'
 gem 'falluto'
 
-puts "hello world"
+require 'falluto/nusmv'
+
