@@ -1,21 +1,26 @@
 require 'rubygems'
 require 'rake'
 
+require 'lib/falluto/version'
+
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "falluto"
+    gem.version = Falluto::Version::STRING
     gem.summary = %Q{A model checker for verifying fault tolerant systems}
     gem.description = %Q{A model checker for verifying fault tolerant systems}
     gem.email = "ehames@gmail.com"
     gem.homepage = "http://github.com/ehames/falluto"
     gem.authors = ["Edgardo Hames"]
     gem.files = ["{lib,bin}/**/*"].map{|p| Dir[p]}.flatten
-    gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
 
+
+    # Development dependencies
+    gem.add_development_dependency "bacon", ">= 1.1.0"
+
+    # Runtime dependencies
     gem.add_dependency "treetop", ">= 1.2.3"
-
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
@@ -23,17 +28,17 @@ rescue LoadError
 end
 
 require 'rake/testtask'
-Rake::TestTask.new(:test) do |test|
-  test.libs << 'lib' << 'test'
-  test.pattern = 'test/**/test_*.rb'
+Rake::TestTask.new(:spec) do |test|
+  test.libs << 'spec'
+  test.pattern = 'spec/**/*_spec.rb'
   test.verbose = true
 end
 
 begin
   require 'rcov/rcovtask'
   Rcov::RcovTask.new do |test|
-    test.libs << 'test'
-    test.pattern = 'test/**/test_*.rb'
+    test.libs << 'spec'
+    test.pattern = 'spec/**/*_spec.rb'
     test.verbose = true
   end
 rescue LoadError
@@ -42,9 +47,9 @@ rescue LoadError
   end
 end
 
-task :test => :check_dependencies
+task :spec => :check_dependencies
 
-task :default => :test
+task :default => :spec
 
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|

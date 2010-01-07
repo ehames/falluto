@@ -1,0 +1,478 @@
+module Falluto
+  grammar Grammar
+    include Tokens
+
+    rule program
+      sp module_list eof
+    end
+
+    rule number
+      TOK_NUMBER
+      / TOK_PLUS TOK_NUMBER
+    end
+
+    rule integer
+      TOK_NUMBER
+      / TOK_PLUS TOK_NUMBER
+      / TOK_MINUS TOK_NUMBER
+    end
+
+    rule number_word
+      TOK_NUMBER_WORD
+    end
+
+    rule subrange
+      integer TOK_TWODOTS integer
+    end
+
+    rule constant
+      TOK_FALSEEXP
+      / TOK_TRUEEXP
+      / number_word
+      / number
+    end
+
+    rule primary_exp
+      constant primary_exp_tail
+      / TOK_MINUS primary_exp primary_exp_tail
+      / TOK_ATOM primary_exp_tail
+      / TOK_SELF primary_exp_tail
+      / TOK_LP basic_expr TOK_RP primary_exp_tail
+      / TOK_NOT primary_exp primary_exp_tail
+      / TOK_BOOL TOK_LP basic_expr TOK_RP primary_exp_tail
+      / TOK_WORD1 TOK_LP basic_expr TOK_RP primary_exp_tail
+      / TOK_NEXT TOK_LP basic_expr TOK_RP primary_exp_tail
+      / TOK_CASE cases:(case_element_expr+) TOK_ESAC tail:primary_exp_tail <CaseNode>
+    end
+
+    rule primary_exp_tail
+      TOK_DOT TOK_ATOM primary_exp_tail
+      / TOK_DOT TOK_NUMBER primary_exp_tail
+      / TOK_LB simple_expression TOK_RB primary_exp_tail
+      / TOK_LB simple_expression TOK_COLON simple_expression TOK_RB primary_exp_tail
+      / EPSILON
+    end
+
+    rule case_element_expr
+      left:basic_expr TOK_COLON right:basic_expr disabled_by:(TOK_DISABLED_BY TOK_LCB list:fault_list TOK_RCB)? TOK_SEMI <CaseElementNode>
+    end
+
+    rule concatenation_expr
+      primary_exp (TOK_CONCATENATION primary_exp)*
+    end
+
+    rule multiplicative_expr
+      concatenation_expr multiplicative_expr_tail
+    end
+
+    rule multiplicative_expr_tail
+      TOK_TIMES concatenation_expr multiplicative_expr_tail
+      / TOK_DIVIDE concatenation_expr multiplicative_expr_tail
+      / EPSILON
+    end
+
+    rule additive_expr
+      multiplicative_expr additive_expr_tail
+    end
+
+    rule additive_expr_tail
+      TOK_PLUS multiplicative_expr additive_expr_tail
+      / TOK_MINUS multiplicative_expr additive_expr_tail
+      / EPSILON
+    end
+
+    rule remainder_expr
+      additive_expr (TOK_MOD additive_expr)*
+    end
+
+    rule shift_expr
+      remainder_expr shift_expr_tail
+    end
+
+    rule shift_expr_tail
+      TOK_LSHIFT remainder_expr shift_expr_tail
+      / TOK_RSHIFT remainder_expr shift_expr_tail
+      / EPSILON
+    end
+
+    rule set_expr
+      subrange
+      / shift_expr
+      / TOK_LCB set_list_expr TOK_RCB
+    end
+
+    rule set_list_expr
+      basic_expr (TOK_COMMA basic_expr)*
+    end
+
+    rule union_expr
+      set_expr (TOK_UNION set_expr)*
+    end
+
+    rule in_expr
+      union_expr (TOK_SETIN union_expr)*
+    end
+
+    rule relational_expr
+      in_expr relational_expr_tail
+    end
+
+    rule relational_expr_tail
+      TOK_EQUAL in_expr relational_expr_tail
+      / TOK_NOTEQUAL in_expr relational_expr_tail
+      / TOK_GT in_expr relational_expr_tail
+      / TOK_GE in_expr relational_expr_tail
+      / TOK_LT in_expr relational_expr_tail
+      / TOK_LE in_expr relational_expr_tail
+      / EPSILON
+    end
+
+    # CTL Specifications
+    rule ctl_expr
+      relational_expr / pure_ctl_expr
+    end
+
+    rule pure_ctl_expr
+      TOK_EX ctl_expr
+      / TOK_AX ctl_expr
+      / TOK_EF ctl_expr
+      / TOK_AF ctl_expr
+      / TOK_EG ctl_expr
+      / TOK_AG ctl_expr
+      / TOK_AA TOK_LB ctl_basic_expr TOK_UNTIL ctl_basic_expr TOK_RB
+      / TOK_EE TOK_LB ctl_basic_expr TOK_UNTIL ctl_basic_expr TOK_RB
+      / TOK_AA TOK_LB ctl_basic_expr TOK_BUNTIL ctl_basic_expr TOK_RB
+      / TOK_EE TOK_LB ctl_basic_expr TOK_BUNTIL ctl_basic_expr TOK_RB
+      / TOK_EBF subrange ctl_expr
+      / TOK_ABF subrange ctl_expr
+      / TOK_EBG subrange ctl_expr
+      / TOK_ABG subrange ctl_expr
+      / TOK_NOT pure_ctl_expr
+    end
+
+    rule ctl_and_expr
+      ctl_expr (TOK_AND ctl_expr)*
+    end
+
+    rule ctl_or_expr
+      ctl_and_expr ctl_or_expr_tail
+    end
+
+    rule ctl_or_expr_tail
+      TOK_OR ctl_and_expr ctl_or_expr_tail
+      / TOK_XOR ctl_and_expr ctl_or_expr_tail
+      / TOK_XNOR ctl_and_expr ctl_or_expr_tail
+      / EPSILON
+    end
+
+    rule ctl_iff_expr
+      ctl_or_expr (TOK_IFF ctl_or_expr)*
+    end
+
+    rule ctl_implies_expr
+      ctl_iff_expr TOK_IMPLIES ctl_implies_expr
+      / ctl_iff_expr
+    end
+
+    rule ctl_basic_expr
+      ctl_implies_expr
+    end
+
+    # LTL Specifications
+    rule ltl_unary_expr
+      ctl_expr
+      / pure_ltl_unary_expr
+    end
+
+    rule pure_ltl_unary_expr
+      TOK_OP_NEXT ltl_unary_expr
+      / TOK_OP_PREC ltl_unary_expr
+      / TOK_OP_NOTPRECNOT ltl_unary_expr
+      / TOK_OP_GLOBAL ltl_unary_expr
+      / TOK_OP_HISTORICAL ltl_unary_expr
+      / TOK_OP_FUTURE ltl_unary_expr
+      / TOK_OP_ONCE ltl_unary_expr
+      / TOK_NOT pure_ltl_unary_expr
+    end
+
+    rule ltl_binary_expr
+      ltl_unary_expr ltl_binary_expr_tail
+    end
+
+    rule ltl_binary_expr_tail
+      TOK_UNTIL ltl_unary_expr ltl_binary_expr_tail
+      / TOK_SINCE ltl_unary_expr ltl_binary_expr_tail
+      / TOK_RELEASES ltl_unary_expr ltl_binary_expr_tail
+      / TOK_TRIGGERED ltl_unary_expr ltl_binary_expr_tail
+      / EPSILON
+    end
+
+    rule and_expr
+      ltl_binary_expr (TOK_AND ltl_binary_expr)*
+    end
+
+    rule or_expr
+      and_expr or_expr_tail
+    end
+
+    rule or_expr_tail
+      TOK_OR and_expr or_expr_tail
+      / TOK_XOR and_expr or_expr_tail
+      / TOK_XNOR and_expr or_expr_tail
+      / EPSILON
+    end
+
+    rule iff_expr
+      or_expr (TOK_IFF or_expr)*
+    end
+
+    rule implies_expr
+      iff_expr (TOK_IMPLIES iff_expr)*
+    end
+
+    rule basic_expr
+      implies_expr
+    end
+
+    rule simple_expression
+      basic_expr
+    end
+
+    rule next_expression
+      basic_expr
+    end
+
+    rule fault_list
+      first:TOK_ATOM rest:(TOK_COMMA fault:TOK_ATOM)*
+    end
+
+    rule ctl_expression
+      basic_expr
+    end
+
+    rule ltl_expression
+      basic_expr
+    end
+
+    rule itype
+      TOK_BOOLEAN
+      / subrange
+      / TOK_WORD TOK_LB simple_expression TOK_RB
+      / TOK_INTEGER
+      / TOK_LCB type_value_list TOK_RCB
+      / TOK_ARRAY TOK_WORD TOK_LB simple_expression TOK_RB TOK_OF TOK_WORD TOK_LB simple_expression TOK_RB
+      / TOK_ARRAY subrange TOK_OF itype
+    end
+
+    rule type
+      itype
+      / module_type
+      / TOK_PROCESS module_type
+    end
+
+    rule type_value_list
+      type_value (TOK_COMMA type_value)*
+    end
+
+    rule type_value
+      complex_atom
+      / integer
+      / TOK_FALSEEXP
+      / TOK_TRUEEXP
+    end
+
+    rule complex_atom
+      TOK_ATOM (TOK_DOT TOK_ATOM)*
+    end
+
+    rule module_type
+      name:TOK_ATOM TOK_LP simple_list_expression TOK_RP
+      / name:TOK_ATOM TOK_LP TOK_RP
+      / name:TOK_ATOM '' # '' is a workaround to a Treetop limitation
+      / TOK_ARRAY subrange TOK_OF module_type
+    end
+
+    rule simple_list_expression
+      simple_expression (TOK_COMMA simple_expression)*
+    end
+
+    rule module_list
+      module+
+    end
+
+    rule module
+      TOK_MODULE module_sign decls:declaration* <ModuleDeclarationNode>
+    end
+
+    rule module_sign
+      name:TOK_ATOM (TOK_LP atom_list? TOK_RP)?
+    end
+
+    rule atom_list
+      TOK_ATOM (TOK_COMMA TOK_ATOM)*
+    end
+
+    rule declaration
+      fault
+      / isa
+      / var
+      / input_var
+      / assign
+      / init
+      / invar
+      / trans
+      / define
+      / fairness
+      / justice
+      / compassion
+      / invarspec
+      / ctlspec
+      / ltlspec
+      / compute
+      / constants
+    end
+
+    rule fault
+      TOK_FAULT id:TOK_ATOM fault_pre fault_effect fault_restores <FaultDeclarationNode>
+    end
+
+    rule fault_pre
+      TOK_PRE TOK_LP simple_expression TOK_RP TOK_SEMI
+    end
+
+    rule fault_effect
+      TOK_EFFECT TOK_LP list:fault_effect_expression_list TOK_RP TOK_SEMI
+    end
+
+    rule fault_effect_expression_list
+      first:fault_effect_expression? rest:(TOK_COMMA fault_effect_expression)*
+    end
+
+    rule fault_effect_expression
+      var_id TOK_EQUAL simple_expression
+    end
+
+    rule fault_restores
+      TOK_RESTORES TOK_LP next_expression TOK_RP TOK_SEMI
+    end
+
+    rule var
+      TOK_VAR var_decl*
+    end
+
+    rule var_decl
+      decl_var_id TOK_COLON type TOK_SEMI <VarDeclNode>
+    end
+
+    rule input_var
+      TOK_IVAR ivar_decl*
+    end
+
+    rule ivar_decl
+      decl_var_id TOK_COLON type TOK_SEMI
+    end
+
+    rule define
+      TOK_DEFINE define_decl+
+    end
+
+    rule define_decl
+      decl_var_id TOK_EQDEF simple_expression TOK_SEMI
+    end
+
+    rule assign
+      TOK_ASSIGN oa:one_assign+
+    end
+
+    rule one_assign
+      var_id TOK_EQDEF simple_expression TOK_SEMI
+      / TOK_SMALLINIT TOK_LP var_id TOK_RP TOK_EQDEF simple_expression TOK_SEMI
+      / TOK_NEXT TOK_LP var_id TOK_RP TOK_EQDEF basic_expr TOK_DISABLED_BY TOK_LCB list:fault_list TOK_RCB TOK_SEMI
+          <FaultAssignmentNode>
+      / TOK_NEXT TOK_LP var_id TOK_RP TOK_EQDEF basic_expr TOK_SEMI <AssignmentNode>
+    end
+
+    rule init
+      TOK_INIT  simple_expression TOK_SEMI?
+    end
+
+    rule invar
+      TOK_INVAR simple_expression TOK_SEMI?
+    end
+
+    rule trans
+      TOK_TRANS next_expression TOK_SEMI?
+    end
+
+    rule fairness
+      TOK_FAIRNESS simple_expression TOK_SEMI?
+    end
+
+    rule justice
+      TOK_JUSTICE simple_expression TOK_SEMI?
+    end
+
+    rule compassion
+      TOK_COMPASSION TOK_LP simple_expression TOK_COMMA simple_expression TOK_RP TOK_SEMI?
+    end
+
+    rule invarspec
+      TOK_INVARSPEC simple_expression TOK_SEMI?
+    end
+
+    rule ctlspec
+      TOK_SPEC ctl_expression TOK_SEMI?
+      / TOK_CTLSPEC ctl_expression TOK_SEMI?
+    end
+
+    rule ltlspec
+      tokspec:TOK_LTLSPEC spec:ltl_expression TOK_SEMI? <LtlSpecNode>
+    end
+
+    rule constants
+      TOK_CONSTANTS constants_expression+
+    end
+
+    rule constants_expression
+      complex_atom (TOK_COMMA complex_atom)*
+    end
+
+    rule compute
+      TOK_COMPUTE compute_expression TOK_SEMI?
+    end
+
+    rule compute_expression
+      TOK_MMIN TOK_LB ctl_expression TOK_COMMA ctl_expression TOK_RB
+      / TOK_MMAX TOK_LB ctl_expression TOK_COMMA ctl_expression TOK_RB
+    end
+
+    rule isa
+      TOK_ISA TOK_ATOM
+    end
+
+    rule decl_var_id
+      TOK_ATOM decl_var_id_tail
+    end
+
+    rule decl_var_id_tail
+      TOK_DOT TOK_ATOM decl_var_id_tail
+      / TOK_DOT TOK_NUMBER decl_var_id_tail
+      / TOK_LB simple_expression TOK_RB decl_var_id_tail
+      / EPSILON
+    end
+
+    rule var_id
+      TOK_ATOM var_id_tail
+      / TOK_SELF var_id_tail
+    end
+
+    rule var_id_tail
+      TOK_DOT TOK_ATOM var_id_tail
+      / TOK_DOT TOK_NUMBER var_id_tail
+      / TOK_LB simple_expression TOK_RB var_id_tail
+      / EPSILON
+    end
+  end
+end
+
+

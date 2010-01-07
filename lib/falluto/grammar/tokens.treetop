@@ -1,0 +1,145 @@
+module Falluto
+  grammar Tokens
+    rule TOK_AND '&' sp end
+    rule TOK_COLON ':' sp end
+    rule TOK_COMMA ',' sp end
+    rule TOK_DOT '.' sp end
+    rule TOK_CONCATENATION '::' sp end
+    rule TOK_DIVIDE '/' sp end
+    rule TOK_EQDEF ':=' sp end
+    rule TOK_EQUAL '=' sp end
+    rule TOK_GE '>=' sp end
+    rule TOK_GT '>' sp end
+    rule TOK_IFF '<->' sp end
+    rule TOK_IMPLIES '->' sp end
+    rule TOK_LB '[' sp end
+    rule TOK_LCB '{' sp end
+    rule TOK_LE '<=' sp end
+    rule TOK_LP '(' sp end
+    rule TOK_LSHIFT '<<' sp end
+    rule TOK_LT '<' sp end
+    rule TOK_MINUS '-' sp end
+    rule TOK_MOD 'mod' eok sp end
+    rule TOK_NOT '!' sp end
+    rule TOK_NOTEQUAL '!=' sp end
+    rule TOK_OR '|' sp end
+    rule TOK_PLUS '+' sp end
+    rule TOK_RB ']' sp end
+    rule TOK_RCB '}' sp end
+    rule TOK_RP ')' sp end
+    rule TOK_RSHIFT '>>' sp end
+    rule TOK_SEMI ';' sp end
+    rule TOK_TWODOTS '..' sp end
+    rule TOK_TIMES '*' sp end
+    rule TOK_XNOR 'xnor' sp end
+    rule TOK_XOR 'xor' sp end
+
+    rule TOK_AA 'A' eok sp end
+    rule TOK_ABF 'ABF' eok sp end
+    rule TOK_ABG 'ABG' eok sp end
+    rule TOK_AF 'AF' eok sp end
+    rule TOK_AG 'AG' eok sp end
+    rule TOK_ARRAY 'array' eok sp end
+    rule TOK_ASSIGN 'ASSIGN' eok sp end
+    rule TOK_AX 'AX' eok sp end
+    rule TOK_BOOLEAN 'boolean' eok sp end
+    rule TOK_BOOL 'bool' eok sp end
+    rule TOK_BUNTIL 'BU' eok sp end
+    rule TOK_CASE 'case' eok sp end
+    rule TOK_COMPASSION 'COMPASSION' eok sp end
+    rule TOK_COMPUTE 'COMPUTE' eok sp end
+    rule TOK_CONSTANTS eok sp end
+    rule TOK_CTLSPEC eok sp end
+    rule TOK_DEFINE 'DEFINE' eok sp end
+    rule TOK_EBF 'EBF' eok sp end
+    rule TOK_EBG 'EBG' eok sp end
+    rule TOK_EE 'É' eok sp end
+    rule TOK_EF 'EF' eok sp end
+    rule TOK_EG 'EG' eok sp end
+    rule TOK_ESAC 'esac' eok sp end
+    rule TOK_EVIL 'evil' eok sp end
+    rule TOK_EX 'EX' eok sp end
+    rule TOK_FAIRNESS 'FAIRNESS' eok sp end
+    rule TOK_FALSEEXP 'FALSE' eok sp end
+    rule TOK_INIT 'INIT' eok sp end
+    rule TOK_INTEGER 'integer' eok sp end
+    rule TOK_INVAR 'INVAR' eok sp end
+    rule TOK_INVARSPEC 'INVARSPEC' eok sp end
+    rule TOK_ISA 'ISA' eok sp end
+    rule TOK_IVAR 'IVAR' eok sp end
+    rule TOK_JUSTICE 'JUSTICE' eok sp end
+    rule TOK_LTLSPEC 'LTLSPEC' eok sp end
+    rule TOK_MMAX 'MAX' eok sp end
+    rule TOK_MMIN 'MIN' eok sp end
+    rule TOK_MODULE 'MODULE' eok sp end
+    rule TOK_NEXT 'next' eok sp end
+    rule TOK_OF 'of' eok sp end
+    rule TOK_OP_FUTURE 'F' eok sp end
+    rule TOK_OP_GLOBAL 'G' eok sp end
+    rule TOK_OP_HISTORICAL 'H' eok sp end
+    rule TOK_OP_NEXT 'X' eok sp end
+    rule TOK_OP_NOTPRECNOT 'Z' eok sp end
+    rule TOK_OP_ONCE 'O' eok sp end
+    rule TOK_OP_PREC 'Y' eok sp end
+    rule TOK_PROCESS 'process' eok sp end
+    rule TOK_RELEASES 'V' eok sp end
+    rule TOK_SELF 'self' eok sp end
+    rule TOK_SETIN 'in' eok sp end
+    rule TOK_SINCE 'S' eok sp end
+    rule TOK_SMALLINIT 'init' eok sp end
+    rule TOK_SPEC 'SPEC' eok sp end
+    rule TOK_TRANS 'TRANS' eok sp end
+    rule TOK_TRIGGERED 'T' eok sp end
+    rule TOK_TRUEEXP 'TRUE' eok sp end
+    rule TOK_UNION 'union' eok sp end
+    rule TOK_UNTIL 'U' eok sp end
+    rule TOK_VAR 'VAR' eok sp end
+    rule TOK_WORD1 'word1' eok sp end
+    rule TOK_WORD 'word' eok sp end
+
+    rule TOK_FAULT 'FAULT' eok sp end
+    rule TOK_PRE 'pre' eok sp end
+    rule TOK_EFFECT 'effect' eok sp end
+    rule TOK_RESTORES 'restores' eok sp end
+    rule TOK_DISABLED_BY 'disabled_by' eok sp end
+
+    rule TOK_NUMBER_WORD
+      '0' [bBoOdDhH] [0-9]* '_' [0-9a-fA-F] [0-9a-fA-F_]*
+    end
+
+    rule keyword
+      TOK_AA / TOK_ABF / TOK_ABG / TOK_AF / TOK_AG / TOK_ARRAY / TOK_ASSIGN
+      / TOK_AX / TOK_BOOLEAN / TOK_BOOL / TOK_BUNTIL / TOK_CASE / TOK_COMPASSION
+      / TOK_COMPUTE / TOK_CONSTANTS / TOK_CTLSPEC / TOK_DEFINE /TOK_EBF
+      / TOK_EBG / TOK_EE / TOK_EF / TOK_EG / TOK_ESAC / TOK_EX
+      / TOK_FAIRNESS / TOK_FALSEEXP / TOK_INIT / TOK_INTEGER / TOK_INVARSPEC
+      / TOK_INVAR / TOK_ISA / TOK_IVAR / TOK_JUSTICE / TOK_LTLSPEC / TOK_MMAX
+      / TOK_MMIN / TOK_MODULE / TOK_NEXT / TOK_OF / TOK_OP_FUTURE
+      / TOK_OP_GLOBAL / TOK_OP_HISTORICAL / TOK_OP_NEXT / TOK_OP_NOTPRECNOT
+      / TOK_OP_ONCE / TOK_OP_PREC / TOK_PROCESS / TOK_RELEASES / TOK_SELF
+      / TOK_SETIN / TOK_SINCE / TOK_SMALLINIT / TOK_SPEC / TOK_TRANS
+      / TOK_TRIGGERED / TOK_TRUEEXP / TOK_UNION / TOK_UNTIL / TOK_VAR
+      / TOK_WORD1 / TOK_WORD
+      / TOK_FAULT / TOK_PRE / TOK_EFFECT / TOK_RESTORES / TOK_DISABLED_BY
+    end
+
+    # Basic Rules
+    rule TOK_NUMBER
+      [0-9]+ sp
+    end
+
+    rule TOK_ATOM
+      !keyword [A-Za-z_] [A-Za-z0-9_$\-\\#]* sp
+    end
+
+    # Useful rules
+    rule idsyms [A-Za-z0-9_$\-\\#] end
+    rule sp (white / comment)* end # Skip optional white space
+    rule white [ \r\n\t] end
+    rule comment '--' (!eoc .)* eoc end
+    rule eok !idsyms end # End Of Keyword
+    rule eoc "\n" / eof end # End Of Comment
+    rule eof !. end # End Of File
+    rule EPSILON '' end
+  end
+end
