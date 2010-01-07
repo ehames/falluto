@@ -1,0 +1,69 @@
+-- This is the leader election protocol extended with a counter.
+-- If the counter reaches a threshold, then system is stabilized.
+-- System with 4 hosts.
+MODULE Host(host_id, pred, N, token, counter)
+FAULT bizantina
+  pre(1);
+  effect(max = {0,1,2,3}, dist = {0,1,2,3}, counter = 0);
+  restores(1);
+DEFINE
+  id := host_id;
+VAR
+  max  : 0 .. 3; -- big enough to hold K
+  dist : 0 .. 3; -- big enough to hold N - 1 
+ASSIGN
+  next(max) :=
+    case
+      (max < id) | (max != id & dist = 0) | (max = id & dist != 0) : id;
+      (pred.dist + 1 < N) & (id < pred.max)                        : pred.max;
+      ((pred.dist + 1 >= N) | (id > pred.id & id >= pred.max))     : id;
+      1                                                            : max;
+    esac;
+
+  next(dist) :=
+    case
+      (max < id) | (max != id & dist = 0) | (max = id & dist != 0) : 0;
+      (pred.dist + 1 < N) & (id < pred.max)                        : pred.dist + 1;
+      ((pred.dist + 1 >= N) | (id > pred.id & id >= pred.max))     : 0;
+      1                                                            : dist;
+    esac;
+
+  next(token) :=
+    case
+      token = pred.id : id;
+      1 : token;
+    esac;
+
+  next(counter) :=
+    case
+      token = pred.id & counter < 20 : counter + 1;
+      1 : counter;
+    esac;
+FAIRNESS running
+
+MODULE main
+DEFINE
+  N := 4; -- number of hosts
+  K := 3; -- max id of any host
+VAR
+  token : 0 .. 3;
+  counter : 0 .. 20;
+
+  h0 : process Host(1, h3, N, token, counter);
+  h1 : process Host(3, h0, N, token, counter);
+  h2 : process Host(2, h1, N, token, counter);
+  h3 : process Host(0, h2, N, token, counter);
+ASSIGN
+  init(counter) := 0;
+
+FAIRNESS running
+
+DEFINE leader_elected := (h0.max = K & h1.max = K & h2.max = K & h3.max = K);
+DEFINE consistent := (h0.id = K -> h0.max = K & h0.dist = 0 & h1.max = K & h1.dist = 1 & h2.max = K & h2.dist = 2 & h3.max = K & h3.dist = 3)
+                   & (h1.id = K -> h0.max = K & h0.dist = 3 & h1.max = K & h1.dist = 0 & h2.max = K & h2.dist = 1 & h3.max = K & h3.dist = 2)
+                   & (h2.id = K -> h0.max = K & h0.dist = 2 & h1.max = K & h1.dist = 3 & h2.max = K & h2.dist = 0 & h3.max = K & h3.dist = 1)
+                   & (h3.id = K -> h0.max = K & h0.dist = 1 & h1.max = K & h1.dist = 2 & h2.max = K & h2.dist = 3 & h3.max = K & h3.dist = 0)
+                   ;
+
+LTLSPEC G ((counter >= 10) -> (leader_elected & consistent))
+

@@ -1,0 +1,157 @@
+MODULE Coordinator(v0, v1, v2, v3)
+FAULT crash
+  pre(1);
+  effect(up = 0);
+  restores(0);
+VAR
+  phase : 0..2;
+  d : boolean;
+  up : boolean;
+ASSIGN
+  init(phase) := 0;
+  next(phase) :=
+    case
+      phase = 0 : 1 disabled_by {crash};
+      phase = 1
+        &
+        ( -- process is up and voted 'yes'
+          (v0.up & v0.phase = 1 & v0.d)
+          &
+          (v1.up & v1.phase = 1 & v1.d)
+          &
+          (v2.up & v2.phase = 1 & v2.d)
+          &
+          (v3.up & v3.phase = 1 & v3.d)
+        )
+        : 2 disabled_by {crash};
+      phase = 1
+        &
+        ( -- process crashed or voted 'no'
+          (!v0.up | (v0.phase >= 1 & !v0.d))
+          |
+          (!v1.up | (v1.phase >= 1 & !v1.d))
+          |
+          (!v2.up | (v2.phase >= 1 & !v2.d))
+          |
+          (!v3.up | (v3.phase >= 1 & !v3.d))
+        )
+        : 2 disabled_by {crash} ;
+      1 : phase disabled_by {crash};
+    esac;
+
+  next(d) :=
+    case
+      phase = 0 : {0, 1} disabled_by {crash};
+      phase = 1
+        &
+        ( -- process is up and voted 'yes'
+          (v0.up & v0.phase = 1 & v0.d)
+          &
+          (v1.up & v1.phase = 1 & v1.d)
+          &
+          (v2.up & v2.phase = 1 & v2.d)
+          &
+          (v3.up & v3.phase = 1 & v3.d)
+        )
+        : 1 disabled_by {crash};
+      phase = 1
+        &
+        ( -- process crashed or voted 'no'
+          (!v0.up | (v0.phase >= 1 & !v0.d))
+          |
+          (!v1.up | (v1.phase >= 1 & !v1.d))
+          |
+          (!v2.up | (v2.phase >= 1 & !v2.d))
+          |
+          (!v3.up | (v3.phase >= 1 & !v3.d))
+        )
+        : 0 disabled_by {crash};
+      1 : d disabled_by {crash};
+    esac;
+
+  init(up) := 1;
+FAIRNESS running
+
+MODULE RegularVoter(c, v0, v1, v2)
+FAULT crash
+  pre(1);
+  effect(up = 0);
+  restores(0);
+VAR
+  phase : {0, 1, 2};
+  d : boolean;
+  up : boolean;
+INIT
+  phase = 0;
+ASSIGN
+  next(phase) :=
+    case
+      phase = 0 & c.up & c.phase = 1 : 1 disabled_by {crash};
+      phase = 0 & !c.up : 2 disabled_by {crash};
+      phase < c.phase & (c.phase = 2) : 2 disabled_by {crash};
+      phase < v0.phase & (v0.phase = 2) : 2 disabled_by {crash};
+      phase < v1.phase & (v1.phase = 2) : 2 disabled_by {crash};
+      phase < v2.phase & (v2.phase = 2) : 2 disabled_by {crash};
+      1 : phase disabled_by {crash};
+    esac;
+
+  next(d) :=
+    case
+      phase = 0 & c.up & c.phase = 1 : {0, 1} disabled_by {crash};
+      phase = 0 & !c.up : 0 disabled_by {crash}; 
+      phase < c.phase & (c.phase = 2) : c.d disabled_by {crash};
+      phase < v0.phase & (v0.phase = 2) : v0.d disabled_by {crash};
+      phase < v1.phase & (v1.phase = 2) : v1.d disabled_by {crash};
+      phase < v2.phase & (v2.phase = 2) : v2.d disabled_by {crash};
+      1 : d disabled_by {crash};
+    esac;
+
+  init(up) := 0;
+FAIRNESS running
+
+MODULE main
+VAR
+  c : process Coordinator(rv0, rv1, rv2, rv3);
+  rv0 : process RegularVoter(c, rv1, rv2, rv3);
+  rv1 : process RegularVoter(c, rv0, rv2, rv3);
+  rv2 : process RegularVoter(c, rv0, rv1, rv3);
+  rv3 : process RegularVoter(c, rv0, rv1, rv2);
+
+DEFINE S0 := (
+              c.phase = 0 -> 
+              (rv0.phase = 0 | (rv0.phase = 2 & !rv0.d)) 
+              &
+              (rv1.phase = 0 | (rv1.phase = 2 & !rv1.d)) 
+              &
+              (rv2.phase = 0 | (rv2.phase = 2 & !rv2.d)) 
+             );
+
+DEFINE S1 := (
+              c.phase = 1 -> 
+              (rv0.phase != 2 | !rv0.d) 
+              &
+              (rv1.phase != 2 | !rv1.d) 
+              &
+              (rv2.phase != 2 | !rv2.d) 
+             );
+
+DEFINE S2 := (
+              c.phase = 2 & c.d -> 
+              (rv0.phase != 0 & rv0.d) 
+              &
+              (rv1.phase != 0 & rv1.d) 
+              &
+              (rv2.phase != 0 & rv2.d) 
+             );
+
+DEFINE S3 := (
+              c.phase = 2 & !c.d -> 
+              (rv0.phase != 2 | !rv0.d) 
+              &
+              (rv1.phase != 2 | !rv1.d) 
+              &
+              (rv2.phase != 2 | !rv2.d) 
+             );
+
+LTLSPEC G (S0 & S1 & S2 & S3)
+
